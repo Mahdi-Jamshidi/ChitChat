@@ -1,5 +1,6 @@
 package com.example.chitchat.ui.features.signIn
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -20,26 +20,42 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.chitchat.R
 import com.example.chitchat.ui.features.signUp.MainTextField
+import com.example.chitchat.ui.features.signUp.checkTextField
+import com.example.chitchat.ui.features.signUp.getErrorText
 import com.example.chitchat.ui.theme.blue
 import com.example.chitchat.ui.theme.lightGray
+import com.example.chitchat.ui.theme.lightRed
+import com.example.chitchat.ui.theme.red
 import com.example.chitchat.ui.theme.shapes
 import com.example.chitchat.ui.theme.textBlack
 import com.example.chitchat.ui.theme.textGray
 import com.example.chitchat.ui.theme.white
+import com.example.chitchat.utils.NUMBER_ERROR
+import com.example.chitchat.utils.NUMBER_VALID_ERROR
 import com.example.chitchat.utils.MyScreens
+import com.example.chitchat.utils.NOT_ERROR
+import com.example.chitchat.utils.PASSWORD_ERROR
+import com.example.chitchat.utils.PASSWORD_VALID_ERROR
+import com.example.chitchat.utils.VALUE_SUCCESS
 import dev.burnoo.cokoin.navigation.getNavController
+import dev.burnoo.cokoin.viewmodel.getViewModel
+import ir.dunijet.dunibazaar.util.NetworkChecker
 
 @Preview(showBackground = true)
 @Composable
@@ -50,6 +66,8 @@ fun SignInScreenPreview() {
 @Composable
 fun SignInScreen() {
     val navigation = getNavController()
+    val viewModel = getViewModel<SignInViewModel>()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -59,7 +77,21 @@ fun SignInScreen() {
         verticalArrangement = Arrangement.Center
     ) {
 
-        MainCardView() {}
+        MainCardView(viewModel) {
+            viewModel.signInUser {
+                viewModel.playLoadingAnim.value = false
+                if (it == VALUE_SUCCESS) {
+                    Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                    navigation.navigate(MyScreens.MainScreen.root) {
+                        popUpTo(MyScreens.SignInScreen.root) {
+                            inclusive = true
+                        }
+                    }
+                } else {
+                    viewModel.loggingMessage.value = it
+                }
+            }
+        }
 
         Box(
             Modifier.padding(top = 10.dp),
@@ -103,13 +135,16 @@ fun SignInScreen() {
 }
 
 @Composable
-fun MainCardView(signInEvent: () -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordConfig by remember { mutableStateOf("") }
+fun MainCardView(viewModel: SignInViewModel, signInEvent: () -> Unit) {
+    val mobile = viewModel.mobile.observeAsState("")
+    val password = viewModel.password.observeAsState("")
+    val errors = viewModel.errors.observeAsState(ArrayList())
+    val loggingField = viewModel.loggingMessage.observeAsState("")
+    val playLoadingAnim = viewModel.playLoadingAnim.observeAsState(false)
+    val context = LocalContext.current
 
     Box {
+        // main card shadow
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -152,42 +187,96 @@ fun MainCardView(signInEvent: () -> Unit) {
                         fontSize = 15.sp,
                     )
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-
+                if (loggingField.value != "") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(58.dp)
+                            .padding(top = 14.dp, start = 28.dp, end = 28.dp)
+                            .background(color = lightRed, shape = shapes.medium),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = loggingField.value,
+                            modifier = Modifier
+                                .background(color = lightRed),
+                            style = TextStyle(
+                                color = red,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        )
+                    }
+                }
+                val phoneNumError =
+                    if (errors.value.contains(NUMBER_ERROR)) NUMBER_ERROR else if (errors.value.contains(
+                            NUMBER_VALID_ERROR
+                        )
+                    ) NUMBER_VALID_ERROR else NOT_ERROR
                 MainTextField(
-                    edtValue = email,
-                    icon = R.drawable.ic_email,
-                    hint = "Email",
-                    isPassword = false
-                ) { email = it }
+                    edtValue = mobile.value,
+                    icon = R.drawable.ic_phone,
+                    hint = "Phone Number",
+                    isPassword = false,
+                    hasError = phoneNumError != NOT_ERROR,
+                    errorText = getErrorText(phoneNumError)
+                ) { viewModel.mobile.value = it }
 
+                val passwordError = if (errors.value.contains(PASSWORD_ERROR)) PASSWORD_ERROR
+                else if(errors.value.contains(PASSWORD_VALID_ERROR)) PASSWORD_VALID_ERROR
+                else NOT_ERROR
                 MainTextField(
-                    edtValue = password,
+                    edtValue = password.value,
                     icon = R.drawable.ic_password,
                     hint = "Password",
-                    isPassword = true
-
-                ) { password = it }
+                    isPassword = true,
+                    hasError = passwordError != NOT_ERROR,
+                    errorText = getErrorText(passwordError)
+                ) { viewModel.password.value = it }
 
                 Button(
-                    onClick = { signInEvent },
+                    onClick = {
+                        viewModel.errors.value = checkTextField(null, mobile, password, null)
+
+                        if (viewModel.errors.value!!.isEmpty()) {
+                            if (NetworkChecker(context).isInternetConnected){
+                                viewModel.playLoadingAnim.value = true
+                                signInEvent.invoke()
+                            } else {
+                                viewModel.loggingMessage.value = "Please check your internet connection"
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .height(72.dp)
-                        .fillMaxWidth()
-                        .padding(top = 18.dp, start = 28.dp, end = 28.dp),
+                        .padding(top = 18.dp, start = 28.dp, end = 28.dp)
+                        .fillMaxWidth(),
                     shape = shapes.medium,
                     colors = ButtonDefaults.buttonColors(containerColor = blue)
                 ) {
-                    Text(
-                        text = "Sign In",
-                        style = TextStyle(
-                            fontSize = 15.sp
+                    if (playLoadingAnim.value) {
+                        LoadingAnimation()
+                    } else {
+                        Text(
+                            text = "Sign In",
+                            style = TextStyle(
+                                fontSize = 15.sp
+                            )
                         )
-                    )
+                    }
                 }
                 Spacer(modifier = Modifier.heightIn(24.dp))
             }
         }
     }
+}
 
+@Composable
+fun LoadingAnimation() {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.anim_loading))
+    LottieAnimation(
+        composition = composition, iterations = LottieConstants.IterateForever,
+        contentScale = ContentScale.Crop,
+    )
 }

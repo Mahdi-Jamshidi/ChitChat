@@ -6,9 +6,11 @@ import androidx.lifecycle.ViewModel
 class SignUpViewModel() : ViewModel() {
 
     val name = MutableLiveData("")
-    val email = MutableLiveData("")
+    val mobile = MutableLiveData("")
     val password = MutableLiveData("")
     val confirmPassword = MutableLiveData("")
+    val errors = MutableLiveData(ArrayList<Int>())
+    val playLoadingAnim = MutableLiveData(false)
 
     fun signUpUsers() {
 

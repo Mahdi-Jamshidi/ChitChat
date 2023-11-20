@@ -12,24 +12,33 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.chitchat.di.myModules
+import com.example.chitchat.model.repository.TokenInMemory
+import com.example.chitchat.model.repository.auth.AuthRepository
+import com.example.chitchat.ui.features.main.MainScreen
 import com.example.chitchat.ui.features.signIn.SignInScreen
 import com.example.chitchat.ui.features.signUp.SignUpScreen
 import com.example.chitchat.ui.theme.MainAppTheme
 import com.example.chitchat.utils.MyScreens
 import dev.burnoo.cokoin.Koin
+import dev.burnoo.cokoin.get
 import dev.burnoo.cokoin.navigation.KoinNavHost
+import org.koin.android.ext.koin.androidContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Koin(appDeclaration = { modules(myModules) }) {
+            Koin(appDeclaration = {
+                androidContext(this@MainActivity)
+                modules(myModules) }) {
                 MainAppTheme {
                     // A surface container using the 'background' color from the theme
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
+                        val authRepository : AuthRepository = get()
+                        authRepository.loadToken()
                         CitChatUi()
                     }
                 }
@@ -38,14 +47,20 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun CitChatUi() {
     val navController = rememberNavController()
     KoinNavHost(
         navController = navController,
-        startDestination = MyScreens.SignInScreen.root
+        startDestination = MyScreens.MainScreen.root
     ) {
+        composable(MyScreens.MainScreen.root) {
+            if (TokenInMemory.token != null){
+                MainScreen()
+            } else {
+                SignInScreen()
+            }
+        }
         composable(MyScreens.SignUpScreen.root) {
             SignUpScreen()
         }
@@ -53,6 +68,7 @@ fun CitChatUi() {
         composable(MyScreens.SignInScreen.root) {
             SignInScreen()
         }
+
     }
 }
 
