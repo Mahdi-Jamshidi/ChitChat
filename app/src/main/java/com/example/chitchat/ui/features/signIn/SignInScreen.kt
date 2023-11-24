@@ -82,10 +82,10 @@ fun SignInScreen() {
                 viewModel.playLoadingAnim.value = false
                 if (it == VALUE_SUCCESS) {
                     Toast.makeText(context, it, Toast.LENGTH_LONG).show()
-                    navigation.navigate(MyScreens.MainScreen.root) {
-                        popUpTo(MyScreens.SignInScreen.root) {
-                            inclusive = true
-                        }
+                    navigation.navigate(MyScreens.DialogsScreen.route) {
+//                        popUpTo(MyScreens.SignInScreen.route) {
+//                            inclusive = true
+//                        }
                     }
                 } else {
                     viewModel.loggingMessage.value = it
@@ -110,7 +110,7 @@ fun SignInScreen() {
                 )
                 TextButton(
                     onClick = {
-                        navigation.navigate(MyScreens.SignUpScreen.root)
+                        navigation.navigate(MyScreens.SignUpScreen.route)
                     }) {
                     Text(text = "Sign up")
                 }
@@ -118,7 +118,7 @@ fun SignInScreen() {
             TextButton(
                 modifier = Modifier.padding(top = 30.dp),
                 onClick = {
-                    navigation.navigate(MyScreens.SignInScreen.root)
+                    navigation.navigate(MyScreens.SignInScreen.route)
                 }) {
                 Text(
                     text = "Forgot Password?",

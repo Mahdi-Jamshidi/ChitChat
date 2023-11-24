@@ -106,7 +106,7 @@ fun SignUpScreen() {
             )
             TextButton(
                 onClick = {
-                    navigation.navigate(MyScreens.SignInScreen.root)
+                    navigation.navigate(MyScreens.SignInScreen.route)
                 }) {
                 Text(text = "Sign in")
             }
