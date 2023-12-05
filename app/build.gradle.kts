@@ -93,4 +93,7 @@ dependencies {
 
     // Lottie Animations
     implementation("com.airbnb.android:lottie-compose:5.2.0")
+
+    // Coil
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }

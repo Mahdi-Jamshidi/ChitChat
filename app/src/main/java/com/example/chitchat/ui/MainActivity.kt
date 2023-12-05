@@ -124,9 +124,6 @@ fun Navigation(navController: NavHostController) {
         composable(MyScreens.CreateChatScreen.route) {
             CreateChatScreen()
         }
-        composable(MyScreens.DialogsScreen.route) {
-            DialogsScreen()
-        }
         composable(MyScreens.FriendsScreen.route) {
             FriendsScreen()
         }

@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">ChitChat</string>
     <string name="title_activity_main_screen">MainScreen</string>
+    <string name="chats">Chats</string>
+    <string name="searchHint">Search for messages or users...</string>
+    <string name="testSting">Hey, Marshall! How are you? Can you please change the color theme of the website to pink and purple?</string>
 </resources>
