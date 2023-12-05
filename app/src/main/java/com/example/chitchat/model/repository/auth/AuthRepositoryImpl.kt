@@ -18,8 +18,9 @@ class AuthRepositoryImpl(
 
         val result = apiService.signIn(jsonObject)
         if (result.status || result.code == 200) {
-            TokenInMemory.refreshMemoryToken(result.data.token)
-            saveToken(result.data.token)
+            val token = "Bearer " + result.data.token
+            TokenInMemory.refreshMemoryToken(token)
+            saveToken(token)
             return VALUE_SUCCESS
         } else {
             return result.message
